@@ -54,7 +54,15 @@ To enable automated task detection, start the file system watcher in the backgro
 python3 watchers/filesystem_watcher.py . --interval 2
 ```
 
-This script will run indefinitely, monitoring your `/Inbox` and moving new files to `/Needs_Action` for Gemini CLI to process.
+### Start the Orchestrator (The Brain)
+To enable autonomous reasoning and task processing, start the orchestrator in the background:
+
+```bash
+# Start the orchestrator with a 10-second polling interval
+python3 orchestrator.py . --interval 10
+```
+
+This script will monitor `/Needs_Action`, invoke the reasoning engine (Gemini CLI), update your Dashboard live, and archive completed tasks to `/Done`.
 
 ---
 
