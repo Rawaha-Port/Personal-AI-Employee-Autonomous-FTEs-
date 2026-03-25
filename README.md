@@ -1,6 +1,6 @@
 # 🏰 AI Employee Vault: Digital FTE Foundation
 
-**Current Achievement Tier: 🥉 BRONZE (Foundation)**
+**Current Achievement Tier: 🥈 SILVER (Functional Assistant)**
 
 This repository implements a local-first, autonomous "Digital FTE" (Full-Time Equivalent) powered by **Gemini CLI** and managed via **Obsidian**. It follows a privacy-centric, human-in-the-loop architecture designed for proactive business and personal automation.
 
@@ -10,11 +10,13 @@ This repository implements a local-first, autonomous "Digital FTE" (Full-Time Eq
 
 The system operates on a **Perception → Reasoning → Action** loop:
 
-1.  **Perception (Watchers)**: Lightweight Python "Watchers" (e.g., Gmail, WhatsApp) sense external signals and drop `.md` files into the `/Needs_Action` folder.
-2.  **Reasoning (Gemini CLI)**: The core reasoning engine (Gemini CLI) reads the `/Needs_Action` folder, interprets the priority, and generates a structured `Plan.md` in Obsidian.
+1.  **Perception (Watchers)**: 
+    - **Filesystem Watcher**: Monitors `/Inbox` for new tasks.
+    - **Gmail Watcher**: Polls Gmail for "Important/Unread" emails and converts them into structured markdown files in `/Needs_Action/` with full metadata.
+2.  **Reasoning (Gemini CLI / Orchestrator)**: The `orchestrator.py` persistent process reads the `/Needs_Action` folder, interprets task priority (using the "Ralph Wiggum" loop), and manages the lifecycle (Thinking -> Acting -> Done).
 3.  **Action (MCP & HITL)**: 
-    -   **HITL (Human-in-the-Loop)**: For sensitive actions (payments, public posts), Gemini CLI creates an approval request in `/Pending_Approval`. 
-    -   **MCP (Model Context Protocol)**: Once approved (file moved to `/Approved`), Gemini CLI executes the action via an MCP server (e.g., sending an email or social media post).
+    -   **HITL (Human-in-the-Loop)**: Sensitive actions (payments, public posts) are staged in `/Pending_Approval`. The Orchestrator proceeds only once a human moves the file to `/Approved`.
+    -   **MCP (Model Context Protocol)**: Once approved, Gemini CLI executes the action via an MCP server.
 
 All actions are logged in a structured JSON format in `/Logs` for full auditability.
 
@@ -47,18 +49,19 @@ python3 init_vault.py
 ```
 
 ### Start the Watcher (The Senses)
-To enable automated task detection, start the file system watcher in the background:
+To enable automated task sensing, start the background watchers:
 
 ```bash
-# Start the watcher monitoring the current directory
-python3 watchers/filesystem_watcher.py . --interval 2
+# Filesystem watcher
+python3 watchers/filesystem_watcher.py . --interval 1 &
+# Gmail watcher (Requires GMAIL_CLIENT_SECRET environment variable)
+python3 watchers/gmail_watcher.py . --interval 300 &
 ```
 
 ### Start the Orchestrator (The Brain)
 To enable autonomous reasoning and task processing, start the orchestrator in the background:
 
 ```bash
-# Start the orchestrator with a 10-second polling interval
 python3 orchestrator.py . --interval 10
 ```
 
